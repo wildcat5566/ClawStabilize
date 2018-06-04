@@ -144,6 +144,7 @@ void loop() {
 
   roll_predict = kalmanX.getAngle(roll_measure, imu[3], dt);
   pitch_predict = kalmanY.getAngle(pitch_measure, imu[4], dt);
+
   
 
   /* 4. Send via serial */
@@ -244,3 +245,4 @@ void PID_init(){
   WL_PID.SetMode(AUTOMATIC);
   WR_PID.SetMode(AUTOMATIC);
 } //PID_init()
+
