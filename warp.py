@@ -4,8 +4,8 @@ import serial
 import numpy as np
 import numpy.linalg as la
 
-height = 960
-width = 1280
+height = 600
+width = 800
 distHeight = 480
 distWidth = 640
 
@@ -55,7 +55,7 @@ for i in range(5):
         txt = ser.readline()
         print(txt)
 
-dz = 0        
+ver = 0        
 while 1:
         ret0, frame0 = cp0.read()
         ser.write(b'1')
@@ -63,12 +63,14 @@ while 1:
         values = txt.split(',')
         print('[predict] ' + ('roll: \t') + values[5] + ('pitch: \t') + values[6])
 
+        ### warp first ###
+        # Cover roll and pitch angles based on IMU data.
         roll = float(values[5])
         pitch = float(values[6])
 
-        ### warp first ###
-        dz = dz - 0.1
-        H = findHomography(-roll, pitch, 0., np.array([[0.], [dz], [0.]])) # -10
+        # Descend vertical perspective gradually.
+        ver = ver - 0.05
+        H = findHomography(-roll, pitch, 0., np.array([[ver], [0.], [0.]]))
         warp = cv2.warpPerspective(frame0, H, (width, height))
 
         ### and then crop ###
@@ -85,11 +87,12 @@ while 1:
 
         ### Plot rectangle ###
         for j in range(4): 
-            cv2.line(warp, (rect[j][0], rect[j][1]), (rect[(j+1)%4][0], rect[(j+1)%4][1]) , (255,0,0), 2)
+            cv2.line(frame0, (rect[j][0], rect[j][1]), (rect[(j+1)%4][0], rect[(j+1)%4][1]) , (255,0,0), 2)
 
         crop = warp[tb:bb, lb:rb, :]
 
-        cv2.imshow('Test0', crop)
+        cv2.imshow('Original', frame0)
+        cv2.imshow('New', warp)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cp0.release()
