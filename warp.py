@@ -70,7 +70,7 @@ while 1:
 
         # Descend vertical perspective gradually.
         ver = ver - 0.05
-        H = findHomography(-roll, pitch, 0., np.array([[ver], [0.], [0.]]))
+        H = findHomography(-roll, pitch, 0., np.array([[0.], [ver], [0.]]))
         warp = cv2.warpPerspective(frame0, H, (width, height))
 
         ### and then crop ###

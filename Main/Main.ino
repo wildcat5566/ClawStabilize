@@ -8,7 +8,6 @@
 #define RelayPin0 4
 #define RelayPin1 2
 #define ExtResetPin 23
-#define ExtResetPin2 22
 int res = 113246;
 
 Kalman kalmanX;
@@ -67,7 +66,6 @@ PID WL_PID(&WL_Feed, &WL_PWMvalue, &set[5], 0, 0, 0, DIRECT);
 void setup() {
   Serial.begin(115200);
   Motor_Init(ExtResetPin);
-  Motor_Init(ExtResetPin2);
   Wire.begin();
   
   mpu.initialize();
