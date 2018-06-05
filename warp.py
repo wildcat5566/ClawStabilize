@@ -4,10 +4,10 @@ import serial
 import numpy as np
 import numpy.linalg as la
 
-height = 600
-width = 800
-distHeight = 480
-distWidth = 640
+height = 960
+width = 1280
+distHeight = 640
+distWidth = 800
 
 K = np.matrix([[756.78768558,   0.        , 629.89805344],
                [  0.        , 756.86336981, 345.49169401],
@@ -42,6 +42,15 @@ def findHomography(r, p, y, t):
     H = K*(R + t*np.transpose(n)/d)*la.inv(K)
     return(H)
 
+def findZ(angle):
+    R = 13.5
+    if angle <= 90:
+        return R
+    elif angle > 90 and angle <= 135:
+        return R*cos(angle - 90)
+    else:
+        return R*cos(180 - angle)
+
 warp = np.zeros((height, width, 3), dtype=float)
 crop = np.zeros((distHeight, distWidth, 3), dtype=float)
 
@@ -61,16 +70,16 @@ while 1:
         ser.write(b'1')
         txt = ser.readline().decode('utf-8')
         values = txt.split(',')
-        print('[predict] ' + ('roll: \t') + values[5] + ('pitch: \t') + values[6])
 
         ### warp first ###
         # Cover roll and pitch angles based on IMU data.
+        theta = float(values[1])%180
         roll = float(values[5])
         pitch = float(values[6])
+        z = findZ(theta)
 
-        # Descend vertical perspective gradually.
-        ver = ver - 0.05
-        H = findHomography(-roll, pitch, 0., np.array([[0.], [ver], [0.]]))
+        print(str(z) + (' angle: \t') + str(theta) + (' roll: \t') + values[5] + (' pitch: \t') + values[6])
+        H = findHomography(-roll, pitch, 0., np.array([[0.], [(13.5-z)], [0.]]))
         warp = cv2.warpPerspective(frame0, H, (width, height))
 
         ### and then crop ###
@@ -87,11 +96,11 @@ while 1:
 
         ### Plot rectangle ###
         for j in range(4): 
-            cv2.line(frame0, (rect[j][0], rect[j][1]), (rect[(j+1)%4][0], rect[(j+1)%4][1]) , (255,0,0), 2)
+            cv2.line(warp, (rect[j][0], rect[j][1]), (rect[(j+1)%4][0], rect[(j+1)%4][1]) , (255,0,0), 2)
 
         crop = warp[tb:bb, lb:rb, :]
 
-        cv2.imshow('Original', frame0)
+        #cv2.imshow('Original', frame0)
         cv2.imshow('New', warp)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):

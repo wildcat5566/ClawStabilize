@@ -25,6 +25,7 @@ float phi;
 bool coll[4];
 float imu[6];
 double set[6] = {0, 0, 0, 0, 0, 0};
+float pos_angle;
 
 long int timestamp = 0;
 int16_t ax, ay, az, gx, gy, gz;
@@ -109,12 +110,16 @@ int grad = 0;
 void loop() {
 
   /* 1. Retrieve data */
-  FR.getMotorState(&count[0], &coll[0]);
+  /*FR.getMotorState(&count[0], &coll[0]);
   FL.getMotorState(&count[1], &coll[1]);
   RR.getMotorState(&count[2], &coll[2]);
   RL.getMotorState(&count[3], &coll[3]);
   WR.getMotorState(&count[4]);
-  WL.getMotorState(&count[5]);
+  WL.getMotorState(&count[5]);*/
+  count[0]+=20;
+  count[1]+=20;
+  count[2]+=20;
+  count[3]+=20;
 
   mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
 
@@ -128,6 +133,8 @@ void loop() {
     theta[i] = abs((count[i] % res) * 360.0 / res);
     //dtheta[i] = ((count[i] - prev_count[i]) % res) / (360*dt);
   }
+  pos_angle = abs((int((count[0] + count[1] + count[2] + count[3]) * 0.25) % res) * 360.0 / res);
+  
   phi = abs((( (count[4] + count[5])/2) % res) * 360.0 / res);
 
   imu[0] = (ax - ax_offset) / acc_sen;
@@ -148,8 +155,8 @@ void loop() {
   /* 4. Send via serial */
   if(Serial.available()){
     int bts = Serial.available();
-    Serial.print(c);Serial.print(",");
-    Serial.print(theta[1]);   Serial.print(",");
+    Serial.print(count[0]);Serial.print(",");
+    Serial.print(pos_angle);   Serial.print(",");
   
     Serial.print(imu[0]);Serial.print(",");Serial.print(imu[1]);Serial.print(",");Serial.print(imu[2]);Serial.print(",");
     Serial.print(roll_predict);Serial.print(",");Serial.println(pitch_predict);
@@ -159,6 +166,7 @@ void loop() {
       bts--;
     }
   }
+  
   /* 5. Calculate PID */
   FR_Feed = count[0];
   FL_Feed = count[1];  
