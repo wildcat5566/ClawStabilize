@@ -83,7 +83,7 @@ class Spline():
                 n = xrange[j]-xrange[0]
                 yrange.append(self.x[4*i] + n*self.x[4*i+1] + n*n*self.x[4*i+2] + n*n*n*self.x[4*i+3])
             if(i==1):
-                plt.plot(xrange, yrange, 'm')
+                plt.plot(xrange, yrange, 'r')
             else:
                 plt.plot(xrange, yrange, 'k:')
             
@@ -96,6 +96,7 @@ class Spline():
         return self.x[4] + dx*self.x[5] + dx*dx*self.x[6] + dx*dx*dx*self.x[7]
 
 # Data setup
+"""
 df = 0
 x_meas = np.arange(0, 6, 0.2)
 y_meas = [6.12, 5.8 , 5.44, 5.13, 4.25,
@@ -123,10 +124,9 @@ for i in range(3):
 
     y_mapped = []
     for j in range(4):
-        print(i*5+j+1)
         y_mapped.append(S.mapSpline(x_meas[i*5+j+1] - i))
 
-    print(y_mapped)
     plt.plot(x_meas[(i*5+6):(i*5+10)], y_mapped, 'mo')
 
 plt.show()
+"""
