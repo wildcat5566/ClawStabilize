@@ -85,10 +85,10 @@ while 1:
         H = findHomography(-roll, pitch, 0., np.array([[0.], [0.], [0.]])) #13.5-z
         warp = cv2.warpPerspective(frame0, H, (width, height))
 
-        cv2.imshow('New', warp)
-        fname = './data/' + str(counts)+'.jpg'
+        cv2.imshow('New', frame0)
+        fname = './data/original/' + str(counts)+'.jpg'
         counts=counts+1
-        cv2.imwrite(fname, frame0)
+        #cv2.imwrite(fname, frame0)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cp0.release()

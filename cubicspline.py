@@ -114,19 +114,21 @@ for i in range(1, 6):
 ### Test code ###
 S = Spline()
 
-for i in range(3):
-    plt.subplot(1,3,i+1)
+for i in range(1,3):
+    plt.subplot(1,2,i)
+    plt.ylim([-4, 12])
     plt.plot([i,i+1,i+2,i+3],
              [y_pivots[i], y_pivots[i+1], y_pivots[i+2], y_pivots[i+3]], 'ro')
 
     df = S.findSpline(y_pivots[i], y_pivots[i+1], y_pivots[i+2], y_pivots[i+3], df, i)
-    plt.plot(x_meas[(i*5):(i*5+15)], y_meas[(i*5):(i*5+15)], 'x')
+    #plt.plot(x_meas[(i*5):(i*5+15)], y_meas[(i*5):(i*5+15)], 'x')
 
     y_mapped = []
     for j in range(4):
         y_mapped.append(S.mapSpline(x_meas[i*5+j+1] - i))
 
-    plt.plot(x_meas[(i*5+6):(i*5+10)], y_mapped, 'mo')
+    #plt.plot(x_meas[(i*5+6):(i*5+10)], y_mapped, 'mo')
 
 plt.show()
+
 """
