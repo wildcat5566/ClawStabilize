@@ -29,14 +29,14 @@ float pos_angle;
 
 long int timestamp = 0;
 int16_t ax, ay, az, gx, gy, gz;
-float gx_offset = -502.42;
-float gy_offset = 248.72;
-float gz_offset = 15.75;
-float ax_offset = 140.79;
-float ay_offset = 122.76;
-float az_offset = 1219.97;
 float gyro_sen = 131.0;
 float acc_sen = 16384.0;
+float ax_offset = 80.00;
+float ay_offset = -375.00;
+float az_offset = 17846.00 - acc_sen;
+float gx_offset = -478.00;
+float gy_offset = 250.00;
+float gz_offset = 18.00;
 
 //******PID Settings******//
 double Timer3_HZ = 100.0;

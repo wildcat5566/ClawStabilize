@@ -95,40 +95,22 @@ class Spline():
     def mapSpline(self, dx):
         return self.x[4] + dx*self.x[5] + dx*dx*self.x[6] + dx*dx*dx*self.x[7]
 
-# Data setup
-"""
-df = 0
-x_meas = np.arange(0, 6, 0.2)
-y_meas = [6.12, 5.8 , 5.44, 5.13, 4.25,
-          3.89, 3.26, 1.93, 0.27, -0.61,
-          -1.43, -1.94,-1.7,-0.64,1.01,
-          2.74, 4.33, 5.58, 6.89, 7.89,
-          6.89, 8.92, 9.22, 9.7 , 10.11,
-          10.23,9.58, 9.47, 8.39, 5.71]
+    def findWarpTargets(self, sampling_ratio, data_seq):
+        pivots = [data_seq[0]]
+        frames = len(data_seq)
+        pivots_count = int(frames / sampling_ratio)
+        x_timestamps = np.arange(0, pivots_count, 1 / sampling_ratio)
+        for i in range(1, pivots_count):
+            # Neighbor-averaging: anti-outlier
+            pivots.append((data_seq[i * sampling_ratio - 1] + data_seq[i * sampling_ratio] + data_seq[i * sampling_ratio + 1]) / 3)
 
-# Sampling: anti-outlier
-y_pivots = [y_meas[0]]
-for i in range(1, 6):
-    y_pivots.append((y_meas[i*5-1] + y_meas[i*5] + y_meas[i*5+1])/3)
+        targets = data_seq[0:sampling_ratio]
+        df = 0 #Previous velocity as current starting boundary condition
+        for i in range(pivots_count - 3):
+            df = Spline.findSpline(self, pivots[i], pivots[i+1], pivots[i+2], pivots[i+3], df, i)
+            targets.append(pivots[i+1])
+            
+            for j in range(sampling_ratio - 1):
+                targets.append(Spline.mapSpline(self, x_timestamps[i * sampling_ratio + j + 1] - i))
 
-### Test code ###
-S = Spline()
-
-for i in range(1,3):
-    plt.subplot(1,2,i)
-    plt.ylim([-4, 12])
-    plt.plot([i,i+1,i+2,i+3],
-             [y_pivots[i], y_pivots[i+1], y_pivots[i+2], y_pivots[i+3]], 'ro')
-
-    df = S.findSpline(y_pivots[i], y_pivots[i+1], y_pivots[i+2], y_pivots[i+3], df, i)
-    #plt.plot(x_meas[(i*5):(i*5+15)], y_meas[(i*5):(i*5+15)], 'x')
-
-    y_mapped = []
-    for j in range(4):
-        y_mapped.append(S.mapSpline(x_meas[i*5+j+1] - i))
-
-    #plt.plot(x_meas[(i*5+6):(i*5+10)], y_mapped, 'mo')
-
-plt.show()
-
-"""
+        return targets

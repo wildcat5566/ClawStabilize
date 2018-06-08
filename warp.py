@@ -88,7 +88,7 @@ while 1:
         cv2.imshow('New', frame0)
         fname = './data/original/' + str(counts)+'.jpg'
         counts=counts+1
-        #cv2.imwrite(fname, frame0)
+        cv2.imwrite(fname, frame0)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cp0.release()

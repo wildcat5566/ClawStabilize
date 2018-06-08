@@ -22,9 +22,9 @@ class Kalman {
 public:
     Kalman() {
         /* We will set the variables like so, these can also be tuned by the user */
-        Q_angle = 0.001;
+        Q_angle = 0.005;
         Q_bias = 0.003;
-        R_measure = 0.02;
+        R_measure = 0.01;
 
         angle = 0; // Reset the angle
         bias = 0; // Reset bias
@@ -49,6 +49,7 @@ public:
         /* Step 5 */
         K[0] = P[0][0] / S;
         K[1] = P[1][0] / S;
+        //Serial.println(K[0]);
         /* Step 3 */ // Calculate angle and bias - Update estimate with measurement zk (newAngle)
         y = newAngle - angle;
         /* Step 6 */
