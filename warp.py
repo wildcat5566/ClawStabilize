@@ -86,7 +86,7 @@ while 1:
         warp = cv2.warpPerspective(frame0, H, (width, height))
 
         cv2.imshow('New', frame0)
-        fname = './data/original/' + str(counts)+'.jpg'
+        fname = './data/0612/original/' + str(counts)+'.jpg'
         counts=counts+1
         cv2.imwrite(fname, frame0)
 
