@@ -307,9 +307,8 @@ features_res = 0.01
 features_dist = 30
 match_minimum_dist = 1000
 f = gf.init(warp1, features_count, features_res, features_dist)
-window = [0.0, 0.0]
+window = [img1.shape[0]*0.5, img1.shape[1]*0.5]
 for i in range(1, 2):
-    print()
     img2 = cv2.imread('./data/0530/original/'+str(i)+'.jpg')
     roll_bias = roll_imu[i]
     pitch_bias = pitch_targets[i]-pitch_imu[i]

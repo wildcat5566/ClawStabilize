@@ -3,18 +3,16 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 import matplotlib
-from fractions import Fraction  
+
 edge = 20
 dist_width = 640
 dist_height = 480
-width = 800
-height = 600
 
 col = ['b', 'g', 'r', 'c', 'm', 'y',
        'tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
        'tab:brown', 'tab:pink', 'tab:olive', 'tab:cyan']
 
-def init(img1,features_count, features_res, features_dist):
+def init(img1, features_count, features_res, features_dist):
     gray1 = np.float32(cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY))[edge:img1.shape[0]-edge, edge:img1.shape[1]-edge]
     f = cv2.goodFeaturesToTrack(gray1, features_count, features_res, features_dist)
     return f
@@ -46,8 +44,8 @@ def matchFeatures(img2, window, f1, features_count, features_res, features_dist,
 
     true_matches = findDisplacement(matches)
     displacementField = findDisplacementField(true_matches)
-    window[0] = window[0] + displacementField[0]
-    window[1] = window[1] + displacementField[1]
+    window[0] = window[0] + displacementField[1]
+    window[1] = window[1] + displacementField[0]
 
     elapsed = time.time() - t
     #print(elapsed)
@@ -58,27 +56,41 @@ def matchFeatures(img2, window, f1, features_count, features_res, features_dist,
         ax1 = plt.subplot(121)
         ax1.imshow(img1)
         for i in range(f1.shape[0]):
-            ax1.plot(f1[i][0][0], f1[i][0][1], 'o', color=col[i%15], markerfacecolor='w', markersize=5)
+            ax1.plot(f1[i][0][0], f1[i][0][1], 'o', color='k', markerfacecolor='w', markersize=5)
         
         ax2 = plt.subplot(122)
         ax2.imshow(img2)
         for i in range(f2.shape[0]):
-            ax2.plot(f2[i][0][0], f2[i][0][1], 'o', color=col[i%15], markerfacecolor='None', markersize=5)
+            ax2.plot(f2[i][0][0], f2[i][0][1], 'o', color='k', markerfacecolor='w', markersize=5)
 
         for i in range(len(matches)):
-            ax2.plot(matches[i][0], matches[i][1], 'o', color='k', markerfacecolor='None', markersize=5)
+            ax2.plot(matches[i][0], matches[i][1], 'o', color='k', markerfacecolor='k', markersize=5)
 
         for i in range(len(true_matches)):
             ax2.arrow(true_matches[i][0], true_matches[i][1],  10*(true_matches[i][2]-true_matches[i][0]), 10*(true_matches[i][3]-true_matches[i][1]),
-                      fc="b", ec="b", head_width=10, head_length=10)
+                      fc="k", ec="k", head_width=10, head_length=10)
 
-        ax2.arrow(img2.shape[1]/2, img2.shape[0]/2, 10*displacementField[0], 10*displacementField[1], fc="r", ec="r", head_width=20, head_length=20, width=5)
-        ax2.plot([(window[0]+0.5*800)-0.5*dist_width, (window[0]+0.5*800)+0.5*dist_width], [(window[1]+0.5*600)-0.5*dist_height, (window[1]+0.5*600)-0.5*dist_height], 'r-')
-        ax2.plot([(window[0]+0.5*800)-0.5*dist_width, (window[0]+0.5*800)+0.5*dist_width], [(window[1]+0.5*600)+0.5*dist_height, (window[1]+0.5*600)+0.5*dist_height], 'r-')
-        ax2.plot([(window[0]+0.5*800)-0.5*dist_width, (window[0]+0.5*800)-0.5*dist_width], [(window[1]+0.5*600)-0.5*dist_height, (window[1]+0.5*600)+0.5*dist_height], 'r-')
-        ax2.plot([(window[0]+0.5*800)+0.5*dist_width, (window[0]+0.5*800)+0.5*dist_width], [(window[1]+0.5*600)-0.5*dist_height, (window[1]+0.5*600)+0.5*dist_height], 'r-')
+        #ax2.arrow(img2.shape[1]/2, img2.shape[0]/2, 10*displacementField[0], 10*displacementField[1], fc="r", ec="r", head_width=20, head_length=20, width=5)
 
+        ### crop ###
+        tb = window[0]-0.5*dist_height
+        bb = window[0]+0.5*dist_height
+        lb = window[1]-0.5*dist_width
+        rb = window[1]+0.5*dist_width
+        #print(window)
+        #print(tb)
+        #print(lb)
+
+        # Plot rectangle
+        #ax2.plot([lb, rb], [tb, tb], 'r-')
+        #ax2.plot([lb, rb], [bb, bb], 'r-')
+        #ax2.plot([lb, lb], [tb, bb], 'r-')
+        #ax2.plot([rb, rb], [tb, bb], 'r-')
+                 
+        crop = img2[tb:bb, lb:rb, :]
+        
         fig.savefig('./data/0530/marked/'+str(count)+'.jpg')
+        cv2.imwrite(('./data/0530/cropped/'+str(count)+'.jpg'),crop)
         plt.close()
 
     for i in range(f2.shape[0]):
@@ -122,8 +134,8 @@ def findDisplacementField(true_matches):
         dx.append(np.cbrt(x))
         dy.append(np.cbrt(y))
 
-    print(dx)
-    print(dy)
+    #print(dx)
+    #print(dy)
 
     dx = np.mean(dx)
     dy = np.mean(dy)
