@@ -58,7 +58,7 @@ cp0 = cv2.VideoCapture(0)
 cp0.set(3,width)
 cp0.set(4,height)
 
-ser = serial.Serial('COM28', 115200)
+ser = serial.Serial('COM5', 115200)
 for i in range(5):
         ser.write(b'1')
         txt = ser.readline()
@@ -81,12 +81,12 @@ while 1:
         # Spline smoothing
         R = cs.Spline()
 
-        print(str(counts) + ('roll:') + str(roll) + (', pitch:') + str(pitch)+',')
+        print(str(counts) + ',' + txt)
         H = findHomography(-roll, pitch, 0., np.array([[0.], [0.], [0.]])) #13.5-z
         warp = cv2.warpPerspective(frame0, H, (width, height))
 
         cv2.imshow('New', frame0)
-        fname = './data/0612/original/' + str(counts)+'.jpg'
+        fname = './0616/' + str(counts)+'.jpg'
         counts=counts+1
         cv2.imwrite(fname, frame0)
 

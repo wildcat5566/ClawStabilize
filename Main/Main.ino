@@ -31,12 +31,23 @@ long int timestamp = 0;
 int16_t ax, ay, az, gx, gy, gz;
 float gyro_sen = 131.0;
 float acc_sen = 16384.0;
+/* 
+//Red group
 float ax_offset = 80.00;
 float ay_offset = -375.00;
 float az_offset = 17846.00 - acc_sen;
 float gx_offset = -478.00;
 float gy_offset = 250.00;
 float gz_offset = 18.00;
+*/
+
+//Blue group
+float ax_offset = -1188.00;
+float ay_offset = -226.00;
+float az_offset = 24623.00 - acc_sen;
+float gx_offset = -178.00;
+float gy_offset = 82.00;
+float gz_offset = -48.00;
 
 //******PID Settings******//
 double Timer3_HZ = 100.0;
@@ -110,17 +121,13 @@ int grad = 0;
 void loop() {
 
   /* 1. Retrieve data */
-  /*FR.getMotorState(&count[0], &coll[0]);
+  FR.getMotorState(&count[0], &coll[0]);
   FL.getMotorState(&count[1], &coll[1]);
   RR.getMotorState(&count[2], &coll[2]);
   RL.getMotorState(&count[3], &coll[3]);
   WR.getMotorState(&count[4]);
-  WL.getMotorState(&count[5]);*/
-  count[0]+=20;
-  count[1]+=20;
-  count[2]+=20;
-  count[3]+=20;
-
+  WL.getMotorState(&count[5]);
+  
   mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
 
   /* 2. Stopwatch */
@@ -156,6 +163,11 @@ void loop() {
   if(Serial.available()){
     int bts = Serial.available();
     Serial.print(count[0]);Serial.print(",");
+    Serial.print(count[1]);Serial.print(",");
+    Serial.print(count[2]);Serial.print(",");
+    Serial.print(count[3]);Serial.print(",");
+    Serial.print(count[4]);Serial.print(",");
+    Serial.print(count[5]);Serial.print(",");
     Serial.print(pos_angle);   Serial.print(",");
   
     Serial.print(imu[0]);Serial.print(",");Serial.print(imu[1]);Serial.print(",");Serial.print(imu[2]);Serial.print(",");
@@ -165,7 +177,7 @@ void loop() {
       Serial.read(); //clear serial buffer
       bts--;
     }
-  }
+ }
   
   /* 5. Calculate PID */
   FR_Feed = count[0];
