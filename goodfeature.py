@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 
 edge = 20
-dist_width = 800
-dist_height = 600
+dist_width = 960
+dist_height = 720
 
 col = ['b', 'g', 'r', 'c', 'm', 'y',
        'tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
@@ -44,8 +44,8 @@ def matchFeatures(img2, window, f1, features_count, features_res, features_dist,
 
     true_matches = findDisplacement(matches, std_range)
     displacementField = findDisplacementField(true_matches)
-    window[0] = window[0] + displacementField[1]
-    window[1] = window[1] + displacementField[0]
+    window[0] = window[0] + displacementField[1]*1.0 #0617random1 0.8
+    window[1] = window[1] + displacementField[0]*1.0
 
     elapsed = time.time() - t
     #print(elapsed)
@@ -61,22 +61,23 @@ def matchFeatures(img2, window, f1, features_count, features_res, features_dist,
         ax2 = plt.subplot(122)
         ax2.imshow(img2)
         for i in range(f2.shape[0]):
-            ax2.plot(f2[i][0][0], f2[i][0][1], 'o', color='k', markerfacecolor='w', markersize=5)
+            ax2.plot(f2[i][0][0], f2[i][0][1], 'o', color='r', markerfacecolor='w', markersize=5)
 
         for i in range(len(matches)):
-            ax2.plot(matches[i][0], matches[i][1], 'o', color='r', markerfacecolor='k', markersize=5)
+            ax2.plot(matches[i][0], matches[i][1], 'o', color='r', markerfacecolor='r', markersize=5)
 
         for i in range(len(true_matches)):
             ax2.arrow(true_matches[i][0], true_matches[i][1],  10*(true_matches[i][2]-true_matches[i][0]), 10*(true_matches[i][3]-true_matches[i][1]),
                       fc="r", ec="r", head_width=10, head_length=10)
 
-        ax2.arrow(img2.shape[1]/2, img2.shape[0]/2, 10*displacementField[0], 10*displacementField[1], fc="r", ec="r", head_width=20, head_length=20, width=5)
+        ax2.arrow(img2.shape[1]/2, img2.shape[0]/2, 10*displacementField[0], 10*displacementField[1],
+                  fc="y", ec="y", head_width=20, head_length=20, width=5)
 
         ### crop ###
-        tb = window[0]-0.5*dist_height
-        bb = window[0]+0.5*dist_height
-        lb = window[1]-0.5*dist_width
-        rb = window[1]+0.5*dist_width
+        tb = int(window[0]-0.5*dist_height)
+        bb = int(window[0]+0.5*dist_height)
+        lb = int(window[1]-0.5*dist_width)
+        rb = int(window[1]+0.5*dist_width)
         #print(window)
         #print(tb)
         #print(lb)
@@ -85,8 +86,7 @@ def matchFeatures(img2, window, f1, features_count, features_res, features_dist,
         ax2.plot([lb, rb], [tb, tb], 'r-')
         ax2.plot([lb, rb], [bb, bb], 'r-')
         ax2.plot([lb, lb], [tb, bb], 'r-')
-        ax2.plot([rb, rb], [tb, bb], 'r-')
-                 
+        ax2.plot([rb, rb], [tb, bb], 'r-')   
         crop = img2[tb:bb, lb:rb, :]
         
         fig.savefig(savedir + str(count) + '.jpg')
@@ -123,7 +123,7 @@ def findDisplacement(matches, std_range):
     return true_matches
 
 def findDisplacementField(true_matches):
-    print(true_matches)
+    print(len(true_matches))
 
     dx = []
     dy = []

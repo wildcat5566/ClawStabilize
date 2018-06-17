@@ -19,6 +19,7 @@ float roll_measure, pitch_measure;
 double roll_predict, pitch_predict;
 
 int count[6];
+int theta_offset = int(res * 135 / 360);
 int prev_count[4]= {0, 0, 0, 0};
 float theta[4], dtheta[4];
 float phi;
@@ -79,10 +80,15 @@ void setup() {
   Serial.begin(115200);
   Motor_Init(ExtResetPin);
   Wire.begin();
+
+  pinMode(RelayPin0, OUTPUT);
+  digitalWrite(RelayPin0, LOW);
+  pinMode(RelayPin1, OUTPUT);
+  digitalWrite(RelayPin1, LOW);
   
   mpu.initialize();
   mpu.setRate(400);
-  Serial.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
+  //Serial.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
 
   WL.setSlaveAddress(0x4A); // Waist Left
   FL.setSlaveAddress(0x4B); // Front left
@@ -91,25 +97,25 @@ void setup() {
   RL.setSlaveAddress(0x4E); // Rear Right
   RR.setSlaveAddress(0x4F);  // Rear Left
   FR.Reverse(); WR.Reverse();
-  
-  //Relays//
-  delay(3000);
-  pinMode(RelayPin0, OUTPUT);
-  digitalWrite(RelayPin0, HIGH);
-  pinMode(RelayPin1, OUTPUT);
-  digitalWrite(RelayPin1, HIGH);
-  
+
   PID_init();
 
-  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+
+  /*Serial.print(roll_measure); Serial.print("\t");
+  Serial.println(pitch_measure);
+  Serial.println("=============Initial guesses=============");*/
+  while(!Serial.available() && mpu.testConnection()){//waiting for start signal
+    mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+  }
+
   imu[0] = (ax - ax_offset) / acc_sen;
   imu[1] = (ay - ay_offset) / acc_sen;
   imu[2] = (az - az_offset) / acc_sen;
   roll_measure  = -atan2(imu[1], imu[2]) * RAD_TO_DEG;
   pitch_measure = atan(imu[0] / sqrt(imu[1] * imu[1] + imu[2] * imu[2])) * RAD_TO_DEG;
-  Serial.print(roll_measure); Serial.print("\t");
-  Serial.println(pitch_measure);
-  Serial.println("=============Initial guesses=============");
+
+  digitalWrite(RelayPin0, HIGH);
+  digitalWrite(RelayPin1, HIGH);
 
   // starting angle setting
   kalmanX.setAngle(roll_measure);
@@ -136,11 +142,8 @@ void loop() {
   timestamp = micros();
   
   /* 3. Unit transformation */
-  for(int i = 0; i < 4; i ++){
-    theta[i] = abs((count[i] % res) * 360.0 / res);
-    //dtheta[i] = ((count[i] - prev_count[i]) % res) / (360*dt);
-  }
-  pos_angle = abs((int((count[0] + count[1] + count[2] + count[3]) * 0.25) % res) * 360.0 / res);
+  pos_angle = abs((int((count[0] + count[1] + count[2] + count[3]) * 0.25 + theta_offset) % res) * 360.0 / res);
+  //pos_angle = abs((int(count[2] + theta_offset) % res) * 360.0 / res);
   
   phi = abs((( (count[4] + count[5])/2) % res) * 360.0 / res);
 
@@ -157,20 +160,20 @@ void loop() {
   roll_predict = kalmanX.getAngle(roll_measure, imu[3], dt);
   pitch_predict = kalmanY.getAngle(pitch_measure, imu[4], dt);
 
-  
-
   /* 4. Send via serial */
   if(Serial.available()){
     int bts = Serial.available();
-    Serial.print(count[0]);Serial.print(",");
+    if (bts == 2){
+      digitalWrite(RelayPin0, LOW);
+      digitalWrite(RelayPin1, LOW);
+    }
+    /*Serial.print(count[0]);Serial.print(",");
     Serial.print(count[1]);Serial.print(",");
     Serial.print(count[2]);Serial.print(",");
     Serial.print(count[3]);Serial.print(",");
     Serial.print(count[4]);Serial.print(",");
-    Serial.print(count[5]);Serial.print(",");
+    Serial.print(count[5]);Serial.print(",");*/
     Serial.print(pos_angle);   Serial.print(",");
-  
-    Serial.print(imu[0]);Serial.print(",");Serial.print(imu[1]);Serial.print(",");Serial.print(imu[2]);Serial.print(",");
     Serial.print(roll_predict);Serial.print(",");Serial.println(pitch_predict);
     
     while(bts){
@@ -187,7 +190,7 @@ void loop() {
   WR_Feed = count[4];
   WL_Feed = count[5];
 
-  if(grad < 300){
+  if(grad < 200){
     grad++;
   }
   
