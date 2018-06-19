@@ -3,22 +3,22 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 import matplotlib
+import ransac
 
 edge = 20
 dist_width = 960
 dist_height = 720
-
-col = ['b', 'g', 'r', 'c', 'm', 'y',
-       'tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
-       'tab:brown', 'tab:pink', 'tab:olive', 'tab:cyan']
 
 def init(img1, features_count, features_res, features_dist):
     gray1 = np.float32(cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY))[edge:img1.shape[0]-edge, edge:img1.shape[1]-edge]
     f = cv2.goodFeaturesToTrack(gray1, features_count, features_res, features_dist)
     return f
     
-def matchFeatures(img2, window, f1, features_count, features_res, features_dist, match_minimum_dist, std_range, plot=True, img1=None, count=0, savedir=None):
+def matchFeatures(img2, window, f1, features_count, features_res, features_dist, match_minimum_dist,
+                  plot=True, img1=None, count=0, matchdir=None, cropdir=None):
+    ###Timing start###
     t = time.time()
+    
     gray2 = np.float32(cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY))[edge:img2.shape[0]-edge, edge:img2.shape[1]-edge]
     f2 = cv2.goodFeaturesToTrack(gray2, features_count, features_res, features_dist)
 
@@ -42,13 +42,19 @@ def matchFeatures(img2, window, f1, features_count, features_res, features_dist,
             if(dist2 < match_minimum_dist):
                 matches.append([x1, y1, x2, y2])
 
-    true_matches = findDisplacement(matches, std_range)
-    displacementField = findDisplacementField(true_matches)
+    #print(matches)
+    model = ransac.ransac_init(np.array(matches))
+    model = ransac.ransac(np.array(matches), model, 2)
+    model = ransac.ransac(np.array(matches), model, 3)
+    displacementField = model
+    #print(model)
+    
     window[0] = window[0] + displacementField[1]*1.0 #0617random1 0.8
     window[1] = window[1] + displacementField[0]*1.0
 
     elapsed = time.time() - t
-    #print(elapsed)
+    print(elapsed)
+    ###Timing over###
 
     if(plot==True):
         fig = plt.figure(figsize=(12,6), dpi=160)
@@ -65,22 +71,17 @@ def matchFeatures(img2, window, f1, features_count, features_res, features_dist,
 
         for i in range(len(matches)):
             ax2.plot(matches[i][0], matches[i][1], 'o', color='r', markerfacecolor='r', markersize=5)
+            ax2.arrow(matches[i][0], matches[i][1],  (matches[i][2]-matches[i][0])*5, (matches[i][3]-matches[i][1])*5,
+                      fc="k", ec="k", head_width=10, head_length=10)
 
-        for i in range(len(true_matches)):
-            ax2.arrow(true_matches[i][0], true_matches[i][1],  10*(true_matches[i][2]-true_matches[i][0]), 10*(true_matches[i][3]-true_matches[i][1]),
-                      fc="r", ec="r", head_width=10, head_length=10)
-
-        ax2.arrow(img2.shape[1]/2, img2.shape[0]/2, 10*displacementField[0], 10*displacementField[1],
-                  fc="y", ec="y", head_width=20, head_length=20, width=5)
+        ax2.arrow(img2.shape[1]/2, img2.shape[0]/2, displacementField[0]*5, displacementField[1]*5,
+                  fc="r", ec="r", head_width=20, head_length=20, width=5)
 
         ### crop ###
         tb = int(window[0]-0.5*dist_height)
         bb = int(window[0]+0.5*dist_height)
         lb = int(window[1]-0.5*dist_width)
         rb = int(window[1]+0.5*dist_width)
-        #print(window)
-        #print(tb)
-        #print(lb)
 
         # Plot rectangle
         ax2.plot([lb, rb], [tb, tb], 'r-')
@@ -89,8 +90,8 @@ def matchFeatures(img2, window, f1, features_count, features_res, features_dist,
         ax2.plot([rb, rb], [tb, bb], 'r-')   
         crop = img2[tb:bb, lb:rb, :]
         
-        fig.savefig(savedir + str(count) + '.jpg')
-        #cv2.imwrite((savedir + str(count) +'.jpg'),crop)
+        fig.savefig(matchdir + str(count) + '.jpg')
+        cv2.imwrite((cropdir + str(count) +'.jpg'),crop)
         plt.close()
 
     for i in range(f2.shape[0]):
@@ -98,52 +99,4 @@ def matchFeatures(img2, window, f1, features_count, features_res, features_dist,
         f2[i][0][1] = f2[i][0][1] - edge
 
     return window, f2
-
-def findDisplacement(matches, std_range):
-    dx = []
-    dy = []
-    for i in range(len(matches)):
-        #arrow length
-        dx.append(matches[i][2] - matches[i][0])
-        dy.append(matches[i][3] - matches[i][1])
-    
-    xdisp_std = max(1,np.std(dx))
-    ydisp_std = max(1,np.std(dy))
-    xdisp_mean = np.mean(dx)
-    ydisp_mean = np.mean(dy)
-    
-    #print('xstd: ' + str(xdisp_std) + '  , ystd: ' + str(ydisp_std))
-    #print(dx)
-    #print(dy)
-    true_matches = []
-    for i in range(len(matches)):
-        if(abs(dx[i] - xdisp_mean) <= std_range*xdisp_std) and (abs(dy[i] - ydisp_mean) <= std_range*ydisp_std):
-            true_matches.append(matches[i])
-
-    return true_matches
-
-def findDisplacementField(true_matches):
-    print(len(true_matches))
-
-    dx = []
-    dy = []
-    for i in range(len(true_matches)):
-    #arrow length
-        x = int(true_matches[i][2] - true_matches[i][0])
-        y = int(true_matches[i][3] - true_matches[i][1])
-        dx.append(np.cbrt(x))
-        dy.append(np.cbrt(y))
-
-    #print(dx)
-    #print(dy)
-
-    dx = np.mean(dx)
-    dy = np.mean(dy)
-        
-    field = []
-
-    field.append(dx**3)
-    field.append(dy**3)
-    #print(field)
-    return field
     

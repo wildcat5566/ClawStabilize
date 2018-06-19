@@ -47,8 +47,8 @@ def findHomography(r, p, y, t):
     H = K*(R + t*np.transpose(n)/d)*la.inv(K)
     return(H)
 
-dataset = 'flat'
 date_mmdd = '0617'
+dataset = 'random1'
 data_dir = '../data/' + date_mmdd + '/' + dataset + '/original/'
 data_csv = '../data/' + date_mmdd + '/' + dataset + '/data.csv'
 data_warpdir = '../data/' + date_mmdd + '/' + dataset + '/warp/'
@@ -82,15 +82,14 @@ warp1 = cv2.warpPerspective(warp1, H, (width, height))
 
 #0617flat: 50, 0.01, 50, 1.2, 1200
 #0617random1: 50, 0.01, 50, 1.2, 1200
-features_count = 20
+features_count = 50
 features_res = 0.01
 features_dist = 30
-std_range = 1.1
-match_minimum_dist = 2500
+match_minimum_dist = 1200
 f = gf.init(warp1, features_count, features_res, features_dist)
-window_center = [height*0.5, width*0.5]
+window_center = [height*0.5, width*0.5-100]
 
-for i in range(1, 130):
+for i in range(1,60):
 #for i in range(1, len(pitch_targets)):
     print(i)
     img2 = cv2.imread(data_dir + str(i) + '.jpg')
@@ -100,7 +99,7 @@ for i in range(1, 130):
     warp2 = cv2.warpPerspective(img2, H, (width, height))
     cv2.imwrite((data_warpdir + str(i) + '.jpg'), warp2)
 
-    window_center, f = gf.matchFeatures(warp2, window_center, f, features_count, features_res, features_dist, match_minimum_dist, std_range,
-                                        plot=True, img1=warp1, count=i, savedir=data_matchdir)
+    window_center, f = gf.matchFeatures(warp2, window_center, f, features_count, features_res, features_dist, match_minimum_dist,
+                                        plot=True, img1=warp1, count=i, matchdir=data_matchdir, cropdir=data_cropdir)
 
     warp1 = warp2
